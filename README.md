@@ -71,8 +71,12 @@ Tracker是整个SDK的核心，负责协调各个组件的工作：
 
 - **系统内置插件**:
   - `PvPlugin`: 页面访问(PV)监控
+    - **功能**: 记录用户访问页面的次数，包括 `SPA` 两种模式
   - `jsErrorPlugin`: JavaScript错误捕获
+    - **功能**: 捕获并上报JavaScript错误信息
+    - **事件**: `error`、`unhandledrejection`、`window.console.error`
   - `networkPlugin`: 网络请求监控
+    - **功能**: 劫持 `ajax` 和 `fetch` 请求，记录请求的URL、状态码、响应时间等
   - `resourcePlugin`: 资源加载监控
   - `performancePlugin`: 性能指标监控
   - `MetricPlugin`: 业务指标监控
