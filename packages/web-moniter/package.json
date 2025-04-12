@@ -1,0 +1,32 @@
+{
+  "name": "@senmu/web-moniter",
+  "version": "0.1.0",
+  "description": "Web监控SDK入口包 - 整合所有功能",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "test": "vitest run",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "web-monitoring",
+    "sdk"
+  ],
+  "author": "senmu",
+  "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@senmu/core": "workspace:*",
+    "@senmu/plugins": "workspace:*",
+    "@senmu/reporter": "workspace:*",
+    "@senmu/types": "workspace:*"
+  }
+}

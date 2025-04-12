@@ -1,0 +1,30 @@
+{
+  "name": "@senmu/plugins",
+  "version": "0.1.0",
+  "description": "插件集合包 - Web监控SDK插件",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "test": "vitest run",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "web-monitoring",
+    "plugins"
+  ],
+  "author": "senmu",
+  "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@senmu/core": "workspace:*",
+    "@senmu/types": "workspace:*"
+  }
+}

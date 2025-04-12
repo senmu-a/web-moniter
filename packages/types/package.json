@@ -1,0 +1,25 @@
+{
+  "name": "@senmu/types",
+  "version": "0.1.0",
+  "description": "类型定义包 - Web监控SDK类型定义",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "web-monitoring",
+    "types"
+  ],
+  "author": "senmu",
+  "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  }
+}

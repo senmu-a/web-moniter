@@ -1,0 +1,16 @@
+{
+  "version": "independent",
+  "npmClient": "pnpm",
+  "useWorkspaces": true,
+  "command": {
+    "version": {
+      "allowBranch": ["main", "master"],
+      "conventionalCommits": true,
+      "message": "chore(release): publish"
+    },
+    "publish": {
+      "conventionalCommits": true,
+      "message": "chore(release): publish"
+    }
+  }
+}
