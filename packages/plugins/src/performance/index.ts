@@ -13,21 +13,10 @@ import {
 interface PerformancePluginOptions {
   // 是否自动监控页面性能指标
   autoCollect?: boolean;
-  // 上报时机: 'load' | 'beforeunload' | 'visibilitychange' | 'immediate'
-  reportTime?: 'load' | 'beforeunload' | 'visibilitychange' | 'immediate';
+  // 上报时机: 'load' | 'beforeunload' | 'visibilitychange' | 'pagehide' | 'immediate'
+  reportTime?: 'load' | 'beforeunload' | 'visibilitychange' | 'pagehide' | 'immediate';
   // 自定义上报延迟(ms)，当 reportTime 为 immediate 时有效
   reportDelay?: number;
-}
-
-// V4 版本指标类型定义 - 使用 web-vitals 提供的类型
-interface Metric {
-  name: 'CLS' | 'FCP' | 'FID' | 'INP' | 'LCP' | 'TTFB';
-  value: number;
-  rating: 'good' | 'needs-improvement' | 'poor';
-  delta: number;
-  id: string;
-  entries: PerformanceEntry[];
-  navigationType: 'navigate' | 'reload' | 'back-forward' | 'back-forward-cache' | 'prerender' | 'restore';
 }
 
 /**
@@ -68,18 +57,17 @@ export class PerformancePlugin extends BasePlugin<PerformancePluginOptions> {
    * 设置 web-vitals 监控
    */
   private setupWebVitals(): void {
-    // 使用正确的指标类型，不再使用废弃的 ReportCallback
     const handleMetric = (metric: MetricType) => {
       this.handleMetric(metric);
     };
     
-    // 收集核心 Web Vitals - V4 版本用法
+    // 收集核心 Web Vitals指标
     onCLS(handleMetric);
     onFID(handleMetric);
     onLCP(handleMetric);
     onFCP(handleMetric);
     onTTFB(handleMetric);
-    onINP(handleMetric); // V4 新增的交互到绘制延迟指标
+    onINP(handleMetric);
     
     // 收集额外的性能指标（如导航计时）
     this.collectNavigationTiming();
@@ -96,19 +84,29 @@ export class PerformancePlugin extends BasePlugin<PerformancePluginOptions> {
   /**
    * 收集导航计时API数据
    * 使用现代的Performance API代替废弃的timing接口
+   * 使用pageshow事件而非load事件，以支持BFCache场景
    */
   private collectNavigationTiming(): void {
-    // 等待页面加载完成
-    if (document.readyState !== 'complete') {
-      const onLoad = () => {
-        window.removeEventListener('load', onLoad);
-        // 延迟一段时间确保性能条目已经完成收集
-        setTimeout(() => this.processNavigationTiming(), 0);
-      };
-      window.addEventListener('load', onLoad);
-      this.eventHandlers.push({ type: 'load', handler: onLoad });
-    } else {
+    // 处理函数
+    const handlePageShow = (event: PageTransitionEvent) => {
+      window.removeEventListener('pageshow', handlePageShow);
+      // 延迟一段时间确保性能条目已经完成收集
+      setTimeout(() => {
+        this.processNavigationTiming();
+        // 如果是从BFCache恢复，标记这个指标
+        if (event.persisted) {
+          this.metricsCollected['fromBFCache'] = 1;
+        }
+      }, 0);
+    };
+    
+    // 如果页面已完成加载，立即处理
+    if (document.readyState === 'complete') {
       this.processNavigationTiming();
+    } else {
+      // 使用pageshow事件替代load事件，可以捕获BFCache恢复的情况
+      window.addEventListener('pageshow', handlePageShow);
+      this.eventHandlers.push({ type: 'pageshow', handler: handlePageShow });
     }
   }
 
@@ -142,8 +140,6 @@ export class PerformancePlugin extends BasePlugin<PerformancePluginOptions> {
       tcpTime: navTiming.connectEnd - navTiming.connectStart,
       // 首字节时间
       ttfb: navTiming.responseStart - navTiming.requestStart,
-      // 白屏时间
-      blankTime: navTiming.domInteractive,
       // 请求响应时间
       responseTime: navTiming.responseEnd - navTiming.responseStart,
       // DOM解析时间
@@ -192,24 +188,36 @@ export class PerformancePlugin extends BasePlugin<PerformancePluginOptions> {
    */
   private setupReportTiming(): void {
     const options = this.options;
-    const reportTime = options.reportTime || 'beforeunload';
+    // 默认使用 pagehide 而非 beforeunload，更好地支持 BFCache 场景
+    const reportTime = options.reportTime || 'pagehide';
     
     switch (reportTime) {
       case 'load':
-        const onLoad = () => {
-          window.removeEventListener('load', onLoad);
-          this.reportPerformanceMetrics();
+        // 使用 pageshow 代替 load，支持 BFCache 恢复场景
+        const onPageShow = (event: PageTransitionEvent) => {
+          // 从 BFCache 恢复时需要重新收集并上报指标
+          if (event.persisted) {
+            // 标记是从 BFCache 恢复
+            this.metricsCollected['fromBFCache'] = 1;
+            this.reportPerformanceMetrics();
+          } else {
+            // 正常加载时，移除事件监听并上报
+            window.removeEventListener('pageshow', onPageShow);
+            this.reportPerformanceMetrics();
+          }
         };
-        window.addEventListener('load', onLoad);
-        this.eventHandlers.push({ type: 'load', handler: onLoad });
+        window.addEventListener('pageshow', onPageShow);
+        this.eventHandlers.push({ type: 'pageshow', handler: onPageShow });
         break;
       
       case 'beforeunload':
-        const onBeforeUnload = () => {
-          this.reportPerformanceMetrics();
-        };
-        window.addEventListener('beforeunload', onBeforeUnload);
-        this.eventHandlers.push({ type: 'beforeunload', handler: onBeforeUnload });
+        // 使用 pagehide 代替 beforeunload，更好地支持 BFCache
+        this.setupPageHideReporting();
+        break;
+      
+      case 'pagehide':
+        // 添加新的选项，使用 pagehide 事件
+        this.setupPageHideReporting();
         break;
       
       case 'visibilitychange':
@@ -230,6 +238,19 @@ export class PerformancePlugin extends BasePlugin<PerformancePluginOptions> {
         }, delay);
         break;
     }
+  }
+  
+  /**
+   * 设置基于 pagehide 事件的上报
+   * 这对 BFCache 场景更友好
+   */
+  private setupPageHideReporting(): void {
+    const onPageHide = (event: PageTransitionEvent) => {
+      // persisted=true 表示页面可能进入 BFCache
+      this.reportPerformanceMetrics();
+    };
+    window.addEventListener('pagehide', onPageHide);
+    this.eventHandlers.push({ type: 'pagehide', handler: onPageHide });
   }
 
   /**
