@@ -31,10 +31,12 @@
     "pnpm": ">=7"
   },
   "devDependencies": {
+    "@types/jsdom": "^21.1.7",
     "@types/node": "^22.14.1",
     "@typescript-eslint/eslint-plugin": "^8.29.1",
     "@typescript-eslint/parser": "^8.29.1",
     "eslint": "^9.24.0",
+    "jsdom": "^26.0.0",
     "lerna": "^8.2.2",
     "rimraf": "^6.0.1",
     "tsup": "^8.4.0",

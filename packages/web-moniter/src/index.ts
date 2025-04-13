@@ -126,8 +126,5 @@ const moniter = new WebMoniter();
 
 // 导出默认实例和插件
 export {
-  moniter as default,
-  // 导出工厂函数，用于创建新的实例
-  createTracker,
-  createReporter
+  moniter as default
 };
