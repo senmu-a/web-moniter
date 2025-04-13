@@ -142,11 +142,22 @@ export class Tracker implements ITracker {
     const metricsToSend = [...this.metricCache];
     this.metricCache = [];
     
-    this.reporter.send(metricsToSend, true).catch((err: Error) => {
+    try {
+      const sendPromise = this.reporter.send(metricsToSend, true);
+      
+      // 确保 sendPromise 是一个 Promise
+      if (sendPromise && typeof sendPromise.catch === 'function') {
+        sendPromise.catch((err: Error) => {
+          console.error('[web-moniter] 上报数据失败:', err);
+          // 失败时重新加入缓存
+          this.metricCache = [...metricsToSend, ...this.metricCache].slice(0, this.config.maxCache || 50);
+        });
+      }
+    } catch (err) {
       console.error('[web-moniter] 上报数据失败:', err);
-      // 失败时重新加入缓存
+      // 如果调用出现异常，也重新加入缓存
       this.metricCache = [...metricsToSend, ...this.metricCache].slice(0, this.config.maxCache || 50);
-    });
+    }
   }
 
   /**
