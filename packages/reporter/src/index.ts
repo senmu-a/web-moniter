@@ -9,6 +9,7 @@ import {
  */
 const DEFAULT_REPORTER_CONFIG: Partial<MoniterConfig> = {
   reportImmediately: false,
+  // 最大缓存数量
   maxCache: 50
 };
 
@@ -28,7 +29,7 @@ export class Reporter implements ReporterInterface {
 
   /**
    * 发送数据
-   */
+  */
   async send(data: MetricData | MetricData[], immediately = false) {
     if (this.destroyed) {
       console.warn('[web-moniter] 上报器已销毁，无法发送数据');
@@ -56,7 +57,7 @@ export class Reporter implements ReporterInterface {
   /**
    * 立即上报（XMLHttpRequest）
    * @private
-   */
+  */
   private async sendImmediate(metrics: MetricData[]) {
     if (this.isSending) {
       console.warn('[web-moniter] 正在上报数据，请稍后再试');
@@ -97,7 +98,7 @@ export class Reporter implements ReporterInterface {
    */
   private async sendBeacon(metrics: MetricData[]) {
     if (typeof navigator.sendBeacon !== 'function') {
-      return this.sendImmediate(metrics);
+      return this.sendImage(metrics);
     }
 
     const blob = new Blob([JSON.stringify(metrics)], {
@@ -107,12 +108,31 @@ export class Reporter implements ReporterInterface {
     const success = navigator.sendBeacon(this.config.reportUrl!, blob);
     
     if (!success) {
-      console.warn('[web-moniter] Beacon API上报失败，尝试使用fetch上报');
-      return this.sendImmediate(metrics);
+      console.warn('[web-moniter] Beacon API上报失败，尝试使用图片上报');
+      return this.sendImage(metrics);
     }
 
     if (this.config.debug) {
       console.log('[web-moniter] Beacon API数据上报成功', metrics);
+    }
+  }
+
+  /**
+   * 使用图片方式上报（兼容性最好）
+   * @private
+   */
+  private async sendImage(metrics: MetricData[]) {
+    try {
+      const data = encodeURIComponent(JSON.stringify(metrics));
+      const img = new Image();
+      img.src = `${this.config.reportUrl}/1x1.gif?data=${data}`;
+      
+      if (this.config.debug) {
+        console.log('[web-moniter] 图片上报成功', metrics);
+      }
+    } catch (err) {
+      console.error('[web-moniter] 图片上报失败', err);
+      throw err;
     }
   }
 
