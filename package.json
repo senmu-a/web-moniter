@@ -13,7 +13,9 @@
     "lint": "pnpm -r lint",
     "bootstrap": "lerna bootstrap",
     "version": "lerna version",
-    "publish": "lerna publish"
+    "publish": "lerna publish",
+    "publish:from-git": "lerna publish from-git",
+    "release": "npm run version && npm run publish:from-git"
   },
   "keywords": [
     "web-monitoring",
