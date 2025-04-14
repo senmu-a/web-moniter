@@ -98,7 +98,7 @@ export class Reporter implements ReporterInterface {
    */
   private async sendBeacon(metrics: MetricData[]) {
     if (typeof navigator.sendBeacon !== 'function') {
-      return this.sendImage(metrics);
+      return this.sendImmediate(metrics);
     }
 
     const blob = new Blob([JSON.stringify(metrics)], {
@@ -108,8 +108,13 @@ export class Reporter implements ReporterInterface {
     const success = navigator.sendBeacon(this.config.reportUrl!, blob);
     
     if (!success) {
-      console.warn('[web-moniter] Beacon API上报失败，尝试使用图片上报');
-      return this.sendImage(metrics);
+      console.warn('[web-moniter] Beacon API上报失败，尝试使用 fetch 上报');
+      try {
+        return await this.sendImmediate(metrics);
+      } catch (err) {
+        console.warn('[web-moniter] fetch 上报失败，尝试使用图片上报');
+        return this.sendImage(metrics);
+      }
     }
 
     if (this.config.debug) {
@@ -123,10 +128,25 @@ export class Reporter implements ReporterInterface {
    */
   private async sendImage(metrics: MetricData[]) {
     try {
-      const data = encodeURIComponent(JSON.stringify(metrics));
-      const img = new Image();
-      img.src = `${this.config.reportUrl}/1x1.gif?data=${data}`;
+      const data = JSON.stringify(metrics);
+      // 检查 URL 长度
+      if (data.length > 2000) { // 预留一些空间给其他参数
+        console.warn('[web-moniter] 数据过大，无法使用图片上报');
+        return;
+      }
       
+      const img = new Image();
+      // 使用 URL 对象处理路径
+      const url = new URL(this.config.reportUrl!);
+      url.pathname = url.pathname.endsWith('/') ? url.pathname + '1x1.gif' : url.pathname + '/1x1.gif';
+      url.searchParams.set('data', data);
+      
+      img.src = url.toString();
+      
+      // 添加加载失败处理
+      img.onerror = () => {
+        console.error('[web-moniter] 图片上报失败');
+      };
       if (this.config.debug) {
         console.log('[web-moniter] 图片上报成功', metrics);
       }
