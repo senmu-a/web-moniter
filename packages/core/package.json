@@ -1,6 +1,6 @@
 {
   "name": "@senmu/core",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "核心追踪器 - Web监控SDK核心功能",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

@@ -1,6 +1,6 @@
 {
   "name": "@senmu/web-moniter",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Web监控SDK入口包 - 整合所有功能",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
