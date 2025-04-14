@@ -156,6 +156,79 @@ describe('Reporter', () => {
       
       // 验证回退到 fetch
       expect(fetch).toHaveBeenCalledTimes(1);
+      expect(fetch).toHaveBeenCalledWith(
+        'https://test.com/report',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json'
+          })
+        })
+      );
+    });
+
+    it('当 sendBeacon 和 fetch 都失败时应该使用图片上报', async () => {
+      // 设置 sendBeacon 返回失败
+      vi.mocked(navigator.sendBeacon).mockReturnValueOnce(false);
+      // 设置 fetch 失败
+      vi.mocked(fetch).mockRejectedValueOnce(new Error('网络错误'));
+
+      const metric: MetricData = {
+        type: MetricType.CUSTOM,
+        name: 'test-metric',
+        value: 400,
+        timestamp: Date.now(),
+        project: 'test-project',
+        pageUrl: 'https://test.com'
+      };
+
+      // 模拟 Image 构造函数
+      const mockImage = {
+        src: '',
+        onerror: null as any,
+        onload: null as any
+      };
+      vi.spyOn(window, 'Image').mockImplementation(() => mockImage as any);
+
+      await reporter.send(metric);
+
+      // 验证 sendBeacon 被调用
+      expect(navigator.sendBeacon).toHaveBeenCalledTimes(1);
+      // 验证 fetch 被调用
+      expect(fetch).toHaveBeenCalledTimes(1);
+      // 验证图片上报被调用
+      expect(mockImage.src).toBe('https://test.com/report/1x1.gif?data=' + encodeURIComponent(JSON.stringify([metric])));
+    });
+
+    it('当数据过大时应该跳过图片上报', async () => {
+      // 设置 sendBeacon 返回失败
+      vi.mocked(navigator.sendBeacon).mockReturnValueOnce(false);
+      // 设置 fetch 失败
+      vi.mocked(fetch).mockRejectedValueOnce(new Error('网络错误'));
+
+      // 创建大量数据
+      const largeData = 'x'.repeat(3000);
+      const metric: MetricData = {
+        type: MetricType.CUSTOM,
+        name: 'test-metric',
+        value: largeData,
+        timestamp: Date.now(),
+        project: 'test-project',
+        pageUrl: 'https://test.com'
+      };
+
+      const consoleSpy = vi.spyOn(console, 'warn');
+
+      await reporter.send(metric);
+
+      // 验证 sendBeacon 被调用
+      expect(navigator.sendBeacon).toHaveBeenCalledTimes(1);
+      // 验证 fetch 被调用
+      expect(fetch).toHaveBeenCalledTimes(1);
+      // 验证警告被记录
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[web-moniter] 数据过大，无法使用图片上报')
+      );
     });
   });
   

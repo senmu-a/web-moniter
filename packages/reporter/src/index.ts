@@ -9,6 +9,7 @@ import {
  */
 const DEFAULT_REPORTER_CONFIG: Partial<MoniterConfig> = {
   reportImmediately: false,
+  // 最大缓存数量
   maxCache: 50
 };
 
@@ -28,7 +29,7 @@ export class Reporter implements ReporterInterface {
 
   /**
    * 发送数据
-   */
+  */
   async send(data: MetricData | MetricData[], immediately = false) {
     if (this.destroyed) {
       console.warn('[web-moniter] 上报器已销毁，无法发送数据');
@@ -56,7 +57,7 @@ export class Reporter implements ReporterInterface {
   /**
    * 立即上报（XMLHttpRequest）
    * @private
-   */
+  */
   private async sendImmediate(metrics: MetricData[]) {
     if (this.isSending) {
       console.warn('[web-moniter] 正在上报数据，请稍后再试');
@@ -107,12 +108,51 @@ export class Reporter implements ReporterInterface {
     const success = navigator.sendBeacon(this.config.reportUrl!, blob);
     
     if (!success) {
-      console.warn('[web-moniter] Beacon API上报失败，尝试使用fetch上报');
-      return this.sendImmediate(metrics);
+      console.warn('[web-moniter] Beacon API上报失败，尝试使用 fetch 上报');
+      try {
+        return await this.sendImmediate(metrics);
+      } catch (err) {
+        console.warn('[web-moniter] fetch 上报失败，尝试使用图片上报');
+        return this.sendImage(metrics);
+      }
     }
 
     if (this.config.debug) {
       console.log('[web-moniter] Beacon API数据上报成功', metrics);
+    }
+  }
+
+  /**
+   * 使用图片方式上报（兼容性最好）
+   * @private
+   */
+  private async sendImage(metrics: MetricData[]) {
+    try {
+      const data = JSON.stringify(metrics);
+      // 检查 URL 长度
+      if (data.length > 2000) { // 预留一些空间给其他参数
+        console.warn('[web-moniter] 数据过大，无法使用图片上报');
+        return;
+      }
+      
+      const img = new Image();
+      // 使用 URL 对象处理路径
+      const url = new URL(this.config.reportUrl!);
+      url.pathname = url.pathname.endsWith('/') ? url.pathname + '1x1.gif' : url.pathname + '/1x1.gif';
+      url.searchParams.set('data', data);
+      
+      img.src = url.toString();
+      
+      // 添加加载失败处理
+      img.onerror = () => {
+        console.error('[web-moniter] 图片上报失败');
+      };
+      if (this.config.debug) {
+        console.log('[web-moniter] 图片上报成功', metrics);
+      }
+    } catch (err) {
+      console.error('[web-moniter] 图片上报失败', err);
+      throw err;
     }
   }
 
