@@ -1,6 +1,6 @@
 {
   "name": "@senmu/reporter",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "数据上报包 - Web监控SDK数据上报模块",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
