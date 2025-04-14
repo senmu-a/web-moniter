@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.2](https://github.com/senmu-a/web-moniter/compare/@senmu/core@0.2.1...@senmu/core@0.2.2) (2025-04-14)
+
+**Note:** Version bump only for package @senmu/core
+
+
+
+
+
 ## [0.2.1](https://github.com/senmu-a/web-moniter/compare/@senmu/core@0.2.0...@senmu/core@0.2.1) (2025-04-14)
 
 **Note:** Version bump only for package @senmu/core
