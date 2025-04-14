@@ -1,6 +1,6 @@
 {
   "name": "@senmu/plugins",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "插件集合包 - Web监控SDK插件",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
