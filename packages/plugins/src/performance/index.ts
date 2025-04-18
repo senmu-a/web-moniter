@@ -1,4 +1,4 @@
-import { BasePlugin } from '../index';
+
 import { MetricType as MonitorMetricType, PerformanceMetric } from '@senmu/types';
 import { 
   onCLS, 
@@ -10,6 +10,8 @@ import {
   type MetricType
 } from 'web-vitals';
 
+import { BasePlugin } from '../base';
+
 interface PerformancePluginOptions {
   // 是否自动监控页面性能指标
   autoCollect?: boolean;
@@ -17,6 +19,15 @@ interface PerformancePluginOptions {
   reportTime?: 'load' | 'beforeunload' | 'visibilitychange' | 'pagehide' | 'immediate';
   // 自定义上报延迟(ms)，当 reportTime 为 immediate 时有效
   reportDelay?: number;
+  // 是否对特定指标启用 reportAllChanges
+  reportAllChanges?: {
+    CLS?: boolean;
+    FID?: boolean;
+    LCP?: boolean;
+    FCP?: boolean;
+    TTFB?: boolean;
+    INP?: boolean;
+  };
 }
 
 /**
@@ -60,14 +71,16 @@ export class PerformancePlugin extends BasePlugin<PerformancePluginOptions> {
     const handleMetric = (metric: MetricType) => {
       this.handleMetric(metric);
     };
-    
-    // 收集核心 Web Vitals指标
-    onCLS(handleMetric);
-    onFID(handleMetric);
-    onLCP(handleMetric);
-    onFCP(handleMetric);
-    onTTFB(handleMetric);
-    onINP(handleMetric);
+    const { reportAllChanges = {} } = this.options;
+
+    // 默认启用 reportAllChanges
+    onCLS(handleMetric, { reportAllChanges: reportAllChanges.CLS ?? false }); 
+    onFID(handleMetric, { reportAllChanges: reportAllChanges.FID ?? false });
+    onLCP(handleMetric, { reportAllChanges: reportAllChanges.LCP ?? false });
+    onFCP(handleMetric, { reportAllChanges: reportAllChanges.FCP ?? false });
+    onTTFB(handleMetric, { reportAllChanges: reportAllChanges.TTFB ?? false });
+    onINP(handleMetric, { reportAllChanges: reportAllChanges.INP ?? false });
+
     
     // 收集额外的性能指标（如导航计时）
     this.collectNavigationTiming();
