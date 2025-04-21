@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.4](https://github.com/senmu-a/web-moniter/compare/@senmu/plugins@0.2.3...@senmu/plugins@0.2.4) (2025-04-21)
+
+
+### Bug Fixes
+
+* plugins ([2e569b3](https://github.com/senmu-a/web-moniter/commit/2e569b3860c273a8805a651666fa555545e4dc59))
+* plugins bug ([1a486a3](https://github.com/senmu-a/web-moniter/commit/1a486a31358de0358f3b6aedd4c5720726a49ab0))
+
+
+
+
+
 ## [0.2.3](https://github.com/senmu-a/web-moniter/compare/@senmu/plugins@0.2.2...@senmu/plugins@0.2.3) (2025-04-14)
 
 **Note:** Version bump only for package @senmu/plugins

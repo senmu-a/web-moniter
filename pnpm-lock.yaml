@@ -30,12 +30,12 @@ importers:
       eslint:
         specifier: ^9.24.0
         version: 9.24.0
-      jsdom:
-        specifier: ^26.0.0
-        version: 26.0.0
       inquirer:
         specifier: ^12.5.2
         version: 12.5.2(@types/node@22.14.1)
+      jsdom:
+        specifier: ^26.0.0
+        version: 26.0.0
       lerna:
         specifier: ^8.2.2
         version: 8.2.2(encoding@0.1.13)
